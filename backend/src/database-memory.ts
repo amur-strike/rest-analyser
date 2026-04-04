@@ -6,6 +6,7 @@ export interface Endpoint {
   session_id: string;
   url_slug: string;
   created_at: number;
+  deleted_at: number | null;
 }
 
 export interface RequestLog {
@@ -42,6 +43,7 @@ export function createEndpoint(sessionId: string, urlSlug: string): Endpoint {
     session_id: sessionId,
     url_slug: urlSlug,
     created_at: Date.now(),
+    deleted_at: null,
   };
 
   endpoints.push(endpoint);
@@ -50,8 +52,17 @@ export function createEndpoint(sessionId: string, urlSlug: string): Endpoint {
 
 export function getEndpointsBySession(sessionId: string): Endpoint[] {
   return endpoints
-    .filter(e => e.session_id === sessionId)
+    .filter(e => e.session_id === sessionId && e.deleted_at === null)
     .sort((a, b) => b.created_at - a.created_at);
+}
+
+export function softDeleteEndpoint(endpointId: string, sessionId: string): boolean {
+  const endpoint = endpoints.find(
+    e => e.id === endpointId && e.session_id === sessionId && e.deleted_at === null
+  );
+  if (!endpoint) return false;
+  endpoint.deleted_at = Date.now();
+  return true;
 }
 
 export function getEndpointBySlug(urlSlug: string): Endpoint | undefined {

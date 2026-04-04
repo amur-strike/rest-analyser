@@ -63,6 +63,15 @@ export function broadcastNewRequest(endpointId: string, requestData: any) {
   });
 }
 
+export function notifyEndpointDeleted(endpointId: string) {
+  clients.forEach((client) => {
+    if (client.endpointId === endpointId && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(JSON.stringify({ type: 'endpoint_deleted', endpointId }));
+      client.endpointId = null;
+    }
+  });
+}
+
 function generateClientId(): string {
   return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }

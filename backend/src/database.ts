@@ -8,6 +8,7 @@ export interface Endpoint {
   session_id: string;
   url_slug: string;
   created_at: number;
+  deleted_at: number | null;
 }
 
 export interface RequestLog {
@@ -30,9 +31,18 @@ export function initDatabase() {
       id TEXT PRIMARY KEY,
       session_id TEXT NOT NULL,
       url_slug TEXT UNIQUE NOT NULL,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      deleted_at INTEGER DEFAULT NULL
     )
   `);
+
+  // Migrate existing databases that lack the deleted_at column
+  const hasDeletedAt = (db.pragma('table_info(endpoints)') as any[]).some(
+    (col) => col.name === 'deleted_at'
+  );
+  if (!hasDeletedAt) {
+    db.exec('ALTER TABLE endpoints ADD COLUMN deleted_at INTEGER DEFAULT NULL');
+  }
 
   // Create request_logs table
   db.exec(`
@@ -78,10 +88,19 @@ export function createEndpoint(sessionId: string, urlSlug: string): Endpoint {
 
 export function getEndpointsBySession(sessionId: string): Endpoint[] {
   const stmt = db.prepare(`
-    SELECT * FROM endpoints WHERE session_id = ? ORDER BY created_at DESC
+    SELECT * FROM endpoints WHERE session_id = ? AND deleted_at IS NULL ORDER BY created_at DESC
   `);
 
   return stmt.all(sessionId) as Endpoint[];
+}
+
+export function softDeleteEndpoint(endpointId: string, sessionId: string): boolean {
+  const stmt = db.prepare(`
+    UPDATE endpoints SET deleted_at = ? WHERE id = ? AND session_id = ? AND deleted_at IS NULL
+  `);
+
+  const result = stmt.run(Date.now(), endpointId, sessionId);
+  return result.changes > 0;
 }
 
 export function getEndpointBySlug(urlSlug: string): Endpoint | undefined {

@@ -4,9 +4,11 @@ import {
   createEndpoint,
   getEndpointsBySession,
   getEndpointBySlug,
+  softDeleteEndpoint,
   getRequestLogsByEndpoint,
   getRequestLogById
 } from '../database';
+import { notifyEndpointDeleted } from '../websocket';
 
 const router = Router();
 
@@ -52,6 +54,25 @@ router.get('/endpoints', (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching endpoints:', error);
     res.status(500).json({ error: 'Failed to fetch endpoints' });
+  }
+});
+
+// Soft-delete an endpoint
+router.delete('/endpoints/:endpointId', (req: Request, res: Response) => {
+  try {
+    const sessionId = (req as any).sessionId;
+    const { endpointId } = req.params;
+
+    const deleted = softDeleteEndpoint(endpointId, sessionId);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Endpoint not found or already deleted' });
+    }
+
+    notifyEndpointDeleted(endpointId);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting endpoint:', error);
+    res.status(500).json({ error: 'Failed to delete endpoint' });
   }
 });
 

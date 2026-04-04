@@ -30,5 +30,9 @@ export const api = {
   async getRequestLog(logId: string): Promise<RequestLog> {
     const response = await apiClient.get(`/api/logs/${logId}`);
     return response.data;
+  },
+
+  async deleteEndpoint(endpointId: string): Promise<void> {
+    await apiClient.delete(`/api/endpoints/${endpointId}`);
   }
 };

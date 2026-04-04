@@ -27,6 +27,13 @@ function App() {
         setRequests((prev) => [message.data, ...prev]);
         setSelectedRequest(message.data);
       }
+      if (message.type === 'endpoint_deleted') {
+        const deletedId = message.endpointId;
+        setEndpoints((prev) => prev.filter((e) => e.id !== deletedId));
+        setSelectedEndpoint((prev) => (prev?.id === deletedId ? null : prev));
+        setRequests([]);
+        setSelectedRequest(null);
+      }
     },
     () => {
       // Re-subscribe whenever the WebSocket (re)connects so we don't lose
@@ -85,6 +92,22 @@ function App() {
     }
   };
 
+  const handleDeleteEndpoint = async (endpointId: string) => {
+    try {
+      await api.deleteEndpoint(endpointId);
+      // The server sends an `endpoint_deleted` WS message to subscribed clients.
+      // For unsubscribed clients (e.g. the endpoint wasn't selected), update state directly.
+      setEndpoints((prev) => prev.filter((e) => e.id !== endpointId));
+      setSelectedEndpoint((prev) => (prev?.id === endpointId ? null : prev));
+      if (selectedEndpoint?.id === endpointId) {
+        setRequests([]);
+        setSelectedRequest(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete endpoint:', error);
+    }
+  };
+
   const handleGenerateUrl = async () => {
     try {
       const newEndpoint = await api.generateUrl();
@@ -103,6 +126,7 @@ function App() {
           endpoints={endpoints}
           selectedEndpoint={selectedEndpoint}
           onSelectEndpoint={setSelectedEndpoint}
+          onDeleteEndpoint={handleDeleteEndpoint}
         />
         <RequestViewer
           endpoint={selectedEndpoint}

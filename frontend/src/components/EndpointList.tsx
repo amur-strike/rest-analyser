@@ -5,12 +5,14 @@ interface EndpointListProps {
   endpoints: Endpoint[];
   selectedEndpoint: Endpoint | null;
   onSelectEndpoint: (endpoint: Endpoint) => void;
+  onDeleteEndpoint: (endpointId: string) => void;
 }
 
 export function EndpointList({
   endpoints,
   selectedEndpoint,
-  onSelectEndpoint
+  onSelectEndpoint,
+  onDeleteEndpoint
 }: EndpointListProps) {
   const copyToClipboard = (url: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -52,6 +54,13 @@ export function EndpointList({
                 title="Copy URL"
               >
                 Copy
+              </button>
+              <button
+                className="btn-delete"
+                onClick={(e) => { e.stopPropagation(); onDeleteEndpoint(endpoint.id); }}
+                title="Delete endpoint"
+              >
+                Delete
               </button>
             </div>
           ))
