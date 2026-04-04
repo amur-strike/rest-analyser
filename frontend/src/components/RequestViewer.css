@@ -1,0 +1,206 @@
+.request-viewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #16162a;
+}
+
+.viewer-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #2a2a3e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1a1a2e;
+}
+
+.viewer-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 0.5rem;
+}
+
+.endpoint-url {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #00d4ff;
+  word-break: break-all;
+}
+
+.request-count {
+  background: #2a2a3e;
+  color: #00ff88;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.viewer-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.request-list-panel {
+  width: 350px;
+  border-right: 1px solid #2a2a3e;
+  display: flex;
+  flex-direction: column;
+  background: #1a1a2e;
+}
+
+.request-list-panel h3 {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  border-bottom: 1px solid #2a2a3e;
+}
+
+.request-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.request-list-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2a2a3e;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.request-list-item:hover {
+  background: #212135;
+}
+
+.request-list-item.active {
+  background: #252540;
+  border-left: 3px solid #00d4ff;
+}
+
+.request-method {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+}
+
+.request-time {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.request-ip {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.request-details-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 2rem;
+}
+
+.request-details-panel h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 1.5rem;
+}
+
+.request-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.detail-section h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #00d4ff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.detail-value {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.detail-value.code {
+  font-family: 'Courier New', monospace;
+  background: #1a1a2e;
+  padding: 0.75rem;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.method-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #0f0f23;
+}
+
+.code-block {
+  background: #1a1a2e;
+  border: 1px solid #2a2a3e;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  line-height: 1.6;
+}
+
+.empty-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-viewer h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #888;
+}
+
+.empty-viewer p {
+  font-size: 1rem;
+  color: #666;
+}
+
+.empty-requests {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.empty-requests p {
+  margin-bottom: 0.5rem;
+}
+
+.empty-requests .hint {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: #888;
+}

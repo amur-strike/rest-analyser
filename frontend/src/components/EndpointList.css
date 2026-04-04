@@ -1,0 +1,109 @@
+.endpoint-list {
+  width: 320px;
+  background: #1a1a2e;
+  border-right: 1px solid #2a2a3e;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.endpoint-list-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #2a2a3e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.endpoint-list-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+}
+
+.endpoint-count {
+  background: #2a2a3e;
+  color: #00d4ff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.endpoint-items {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.endpoint-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2a2a3e;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.endpoint-item:hover {
+  background: #212135;
+}
+
+.endpoint-item.active {
+  background: #252540;
+  border-left: 3px solid #00d4ff;
+}
+
+.endpoint-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.endpoint-slug {
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  color: #00d4ff;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.endpoint-date {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.btn-copy {
+  background: #2a2a3e;
+  color: #e0e0e0;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-copy:hover {
+  background: #00d4ff;
+  color: #0f0f23;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.empty-state p {
+  margin-bottom: 0.5rem;
+}
+
+.empty-state-hint {
+  font-size: 0.9rem;
+  color: #555;
+}

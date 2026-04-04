@@ -1,0 +1,41 @@
+.header {
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a3e;
+  padding: 1rem 2rem;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #00d4ff;
+}
+
+.btn-generate {
+  background: #00d4ff;
+  color: #0f0f23;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-generate:hover {
+  background: #00b8e6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.btn-generate:active {
+  transform: translateY(0);
+}
