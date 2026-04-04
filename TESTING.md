@@ -11,7 +11,7 @@ Comprehensive test suite for the REST Endpoint Analyser application.
 - ✅ Data validation and constraints
 - ✅ Error handling
 - ✅ Soft-delete: sets `deleted_at`, returns correct boolean, session-scoped, double-delete guard
-- ✅ Soft-delete: deleted endpoint excluded from session list but slug still resolves
+- ✅ Soft-delete: deleted endpoint excluded from session list; DB row retained but handler returns 404 for new requests
 - ✅ Soft-delete: all request logs preserved after deletion
 
 **Integration Tests** (`backend/tests/integration/`):
@@ -255,7 +255,7 @@ jobs:
    - ✅ Non-existent endpoint handling
    - ✅ Soft-delete endpoint (204, removed from list)
    - ✅ Delete returns 404 for non-existent, already-deleted, or cross-session endpoint
-   - ✅ URL slug continues accepting requests after deletion
+   - ✅ URL slug returns 404 for new requests after deletion (no further logging)
    - ✅ Request logs preserved and accessible after deletion
    - ✅ `notifyEndpointDeleted` called only on successful delete
 
@@ -274,7 +274,7 @@ jobs:
    - ✅ Null value handling
    - ✅ Foreign key constraints
    - ✅ Soft-delete: `deleted_at` set, session-scoped, double-delete guard
-   - ✅ Soft-delete: slug still resolves via `getEndpointBySlug`
+   - ✅ Soft-delete: DB row retained (`getEndpointBySlug` returns it with `deleted_at` set); endpoint handler gates on `deleted_at` and returns 404
    - ✅ Soft-delete: logs preserved via `getRequestLogsByEndpoint`
 
 ### Frontend
