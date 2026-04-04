@@ -83,7 +83,7 @@ export function createEndpoint(sessionId: string, urlSlug: string): Endpoint {
 
   stmt.run(id, sessionId, urlSlug, createdAt);
 
-  return { id, session_id: sessionId, url_slug: urlSlug, created_at: createdAt };
+  return { id, session_id: sessionId, url_slug: urlSlug, created_at: createdAt, deleted_at: null };
 }
 
 export function getEndpointsBySession(sessionId: string): Endpoint[] {

@@ -4,12 +4,14 @@ describe('API Service', () => {
   // Mock axios before importing api
   const mockPost = vi.fn();
   const mockGet = vi.fn();
+  const mockDelete = vi.fn();
 
   vi.doMock('axios', () => ({
     default: {
       create: vi.fn(() => ({
         post: mockPost,
         get: mockGet,
+        delete: mockDelete,
       })),
     },
   }));
@@ -105,6 +107,26 @@ describe('API Service', () => {
 
       expect(mockGet).toHaveBeenCalledWith('/api/logs/log-1');
       expect(result).toEqual(mockResponse.data);
+    });
+  });
+
+  describe('deleteEndpoint', () => {
+    it('should send a DELETE request to the correct URL', async () => {
+      mockDelete.mockResolvedValue({ data: undefined });
+
+      const { api } = await import('../api');
+      await api.deleteEndpoint('endpoint-1');
+
+      expect(mockDelete).toHaveBeenCalledWith('/api/endpoints/endpoint-1');
+    });
+
+    it('should resolve without a return value on success', async () => {
+      mockDelete.mockResolvedValue({ data: undefined });
+
+      const { api } = await import('../api');
+      const result = await api.deleteEndpoint('endpoint-1');
+
+      expect(result).toBeUndefined();
     });
   });
 });

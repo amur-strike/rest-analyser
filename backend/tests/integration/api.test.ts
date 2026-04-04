@@ -9,6 +9,14 @@ import { initDatabase } from '../../src/database-memory';
 // Mock the database module
 jest.mock('../../src/database', () => require('../../src/database-memory'));
 
+// Mock the websocket module — no WS server in tests; we just verify calls
+jest.mock('../../src/websocket', () => ({
+  broadcastNewRequest: jest.fn(),
+  notifyEndpointDeleted: jest.fn(),
+}));
+
+import { notifyEndpointDeleted } from '../../src/websocket';
+
 describe('API Integration Tests', () => {
   let app: express.Application;
 
@@ -82,6 +90,114 @@ describe('API Integration Tests', () => {
       expect(response.body[0]).toHaveProperty('id');
       expect(response.body[0]).toHaveProperty('url');
       expect(response.body[0]).toHaveProperty('slug');
+    });
+  });
+
+  describe('DELETE /api/endpoints/:endpointId', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should soft-delete an endpoint and return 204', async () => {
+      const agent = request.agent(app);
+
+      const urlResponse = await agent.post('/api/generate-url');
+      const { id: endpointId } = urlResponse.body;
+
+      await agent.delete(`/api/endpoints/${endpointId}`).expect(204);
+    });
+
+    it('should remove the endpoint from GET /api/endpoints after deletion', async () => {
+      const agent = request.agent(app);
+
+      const urlResponse = await agent.post('/api/generate-url');
+      const { id: endpointId } = urlResponse.body;
+
+      await agent.delete(`/api/endpoints/${endpointId}`);
+
+      const listResponse = await agent.get('/api/endpoints').expect(200);
+      const ids = listResponse.body.map((e: any) => e.id);
+      expect(ids).not.toContain(endpointId);
+    });
+
+    it('should return 404 for a non-existent endpoint', async () => {
+      const agent = request.agent(app);
+
+      await agent.delete('/api/endpoints/non-existent-id').expect(404);
+    });
+
+    it('should return 404 when trying to delete another session\'s endpoint', async () => {
+      // Create endpoint with agent1
+      const agent1 = request.agent(app);
+      const urlResponse = await agent1.post('/api/generate-url');
+      const { id: endpointId } = urlResponse.body;
+
+      // Try to delete with agent2 (different session)
+      const agent2 = request.agent(app);
+      await agent2.delete(`/api/endpoints/${endpointId}`).expect(404);
+
+      // Endpoint should still exist for agent1
+      const listResponse = await agent1.get('/api/endpoints').expect(200);
+      expect(listResponse.body.map((e: any) => e.id)).toContain(endpointId);
+    });
+
+    it('should return 404 when deleting an already-deleted endpoint', async () => {
+      const agent = request.agent(app);
+
+      const urlResponse = await agent.post('/api/generate-url');
+      const { id: endpointId } = urlResponse.body;
+
+      await agent.delete(`/api/endpoints/${endpointId}`).expect(204);
+      await agent.delete(`/api/endpoints/${endpointId}`).expect(404);
+    });
+
+    it('should still capture new requests to the slug after deletion', async () => {
+      const agent = request.agent(app);
+
+      const urlResponse = await agent.post('/api/generate-url');
+      const { id: endpointId, slug } = urlResponse.body;
+
+      await agent.delete(`/api/endpoints/${endpointId}`);
+
+      // The URL slug should still accept incoming requests
+      const response = await agent.get(`/e/${slug}`).expect(200);
+      expect(response.body.success).toBe(true);
+    });
+
+    it('should preserve existing request logs after deletion', async () => {
+      const agent = request.agent(app);
+
+      const urlResponse = await agent.post('/api/generate-url');
+      const { id: endpointId, slug } = urlResponse.body;
+
+      // Log a request before deletion
+      await agent.post(`/e/${slug}`).send({ data: 'before delete' });
+
+      await agent.delete(`/api/endpoints/${endpointId}`);
+
+      // Logs should still be accessible
+      const logsResponse = await agent.get(`/api/endpoints/${endpointId}/logs`).expect(200);
+      expect(logsResponse.body).toHaveLength(1);
+      expect(logsResponse.body[0].method).toBe('POST');
+    });
+
+    it('should call notifyEndpointDeleted with the correct endpoint ID', async () => {
+      const agent = request.agent(app);
+
+      const urlResponse = await agent.post('/api/generate-url');
+      const { id: endpointId } = urlResponse.body;
+
+      await agent.delete(`/api/endpoints/${endpointId}`).expect(204);
+
+      expect(notifyEndpointDeleted).toHaveBeenCalledWith(endpointId);
+    });
+
+    it('should not call notifyEndpointDeleted when deletion fails', async () => {
+      const agent = request.agent(app);
+
+      await agent.delete('/api/endpoints/non-existent-id').expect(404);
+
+      expect(notifyEndpointDeleted).not.toHaveBeenCalled();
     });
   });
 

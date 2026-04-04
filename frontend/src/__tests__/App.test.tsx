@@ -8,7 +8,7 @@
  *   2. subscribe message sent before WS was OPEN → silently dropped (race condition)
  *   3. No re-subscribe after reconnect → backend lost the client subscription
  */
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // vi.mock is hoisted before imports by Vitest, so the mocked version is what
@@ -18,6 +18,7 @@ vi.mock('../services/api', () => ({
     getEndpoints: vi.fn(),
     getRequestLogs: vi.fn(),
     generateUrl: vi.fn(),
+    deleteEndpoint: vi.fn(),
   },
 }));
 
@@ -178,6 +179,148 @@ describe('App — real-time WebSocket updates', () => {
     const patchIndex = methods.findIndex((el) => el.textContent === 'PATCH');
     const getIndex = methods.findIndex((el) => el.textContent === 'GET');
     expect(patchIndex).toBeLessThan(getIndex);
+  });
+
+  describe('endpoint_deleted WebSocket message', () => {
+    it('should remove the endpoint from the list', async () => {
+      render(<App />);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      // Both endpoints visible in the sidebar
+      expect(screen.getByText('/abc123')).toBeInTheDocument();
+      expect(screen.getByText('/def456')).toBeInTheDocument();
+
+      const ws = (global.WebSocket as any).mock.instances[0];
+
+      act(() => {
+        if (ws.onmessage) {
+          ws.onmessage({
+            data: JSON.stringify({ type: 'endpoint_deleted', endpointId: 'endpoint-1' }),
+          });
+        }
+      });
+
+      expect(screen.queryByText('/abc123')).not.toBeInTheDocument();
+      // The other endpoint should be unaffected
+      expect(screen.getByText('/def456')).toBeInTheDocument();
+    });
+
+    it('should show "No Endpoint Selected" when the currently selected endpoint is deleted', async () => {
+      render(<App />);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      // endpoint-1 is auto-selected — viewer shows its URL
+      expect(screen.queryByText('No Endpoint Selected')).not.toBeInTheDocument();
+
+      const ws = (global.WebSocket as any).mock.instances[0];
+
+      act(() => {
+        if (ws.onmessage) {
+          ws.onmessage({
+            data: JSON.stringify({ type: 'endpoint_deleted', endpointId: 'endpoint-1' }),
+          });
+        }
+      });
+
+      expect(screen.getByText('No Endpoint Selected')).toBeInTheDocument();
+    });
+
+    it('should keep the current selection when a non-selected endpoint is deleted', async () => {
+      render(<App />);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      const ws = (global.WebSocket as any).mock.instances[0];
+
+      // Delete endpoint-2 (not currently selected)
+      act(() => {
+        if (ws.onmessage) {
+          ws.onmessage({
+            data: JSON.stringify({ type: 'endpoint_deleted', endpointId: 'endpoint-2' }),
+          });
+        }
+      });
+
+      // endpoint-1 URL should still be shown in the viewer
+      expect(screen.getByText('http://localhost:3001/e/abc123')).toBeInTheDocument();
+      // endpoint-2 should be gone from the sidebar
+      expect(screen.queryByText('/def456')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('handleDeleteEndpoint', () => {
+    it('should call api.deleteEndpoint and remove the endpoint from the list', async () => {
+      vi.mocked(api.deleteEndpoint).mockResolvedValue(undefined);
+
+      render(<App />);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      expect(screen.getByText('/abc123')).toBeInTheDocument();
+
+      const deleteButtons = screen.getAllByText('Delete');
+      await act(async () => {
+        fireEvent.click(deleteButtons[0]);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+
+      expect(api.deleteEndpoint).toHaveBeenCalledWith('endpoint-1');
+      expect(screen.queryByText('/abc123')).not.toBeInTheDocument();
+    });
+
+    it('should show "No Endpoint Selected" when the selected endpoint is deleted via button', async () => {
+      vi.mocked(api.deleteEndpoint).mockResolvedValue(undefined);
+
+      render(<App />);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      // endpoint-1 is auto-selected
+      expect(screen.queryByText('No Endpoint Selected')).not.toBeInTheDocument();
+
+      const deleteButtons = screen.getAllByText('Delete');
+      await act(async () => {
+        fireEvent.click(deleteButtons[0]);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+
+      expect(screen.getByText('No Endpoint Selected')).toBeInTheDocument();
+    });
+
+    it('should keep the current selection when a non-selected endpoint is deleted', async () => {
+      vi.mocked(api.deleteEndpoint).mockResolvedValue(undefined);
+
+      render(<App />);
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      });
+
+      // Click delete on the second endpoint (endpoint-2 = /def456), which is not selected
+      const deleteButtons = screen.getAllByText('Delete');
+      await act(async () => {
+        fireEvent.click(deleteButtons[1]);
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      });
+
+      expect(api.deleteEndpoint).toHaveBeenCalledWith('endpoint-2');
+      // endpoint-1 URL should still be shown in the viewer
+      expect(screen.getByText('http://localhost:3001/e/abc123')).toBeInTheDocument();
+      // endpoint-2 gone from sidebar
+      expect(screen.queryByText('/def456')).not.toBeInTheDocument();
+    });
   });
 
   it('should auto-select a new incoming request even when one is already selected', async () => {

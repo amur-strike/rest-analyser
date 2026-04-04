@@ -10,6 +10,7 @@ describe('EndpointList', () => {
         endpoints={[]}
         selectedEndpoint={null}
         onSelectEndpoint={() => {}}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -23,6 +24,7 @@ describe('EndpointList', () => {
         endpoints={mockEndpoints}
         selectedEndpoint={null}
         onSelectEndpoint={() => {}}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -36,6 +38,7 @@ describe('EndpointList', () => {
         endpoints={mockEndpoints}
         selectedEndpoint={null}
         onSelectEndpoint={() => {}}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -48,6 +51,7 @@ describe('EndpointList', () => {
         endpoints={mockEndpoints}
         selectedEndpoint={mockEndpoints[0]}
         onSelectEndpoint={() => {}}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -62,6 +66,7 @@ describe('EndpointList', () => {
         endpoints={mockEndpoints}
         selectedEndpoint={null}
         onSelectEndpoint={handleSelect}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -84,6 +89,7 @@ describe('EndpointList', () => {
         endpoints={mockEndpoints}
         selectedEndpoint={null}
         onSelectEndpoint={() => {}}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -100,6 +106,7 @@ describe('EndpointList', () => {
         endpoints={mockEndpoints}
         selectedEndpoint={null}
         onSelectEndpoint={handleSelect}
+        onDeleteEndpoint={() => {}}
       />
     );
 
@@ -107,5 +114,74 @@ describe('EndpointList', () => {
     fireEvent.click(copyButton);
 
     expect(handleSelect).not.toHaveBeenCalled();
+  });
+
+  describe('delete button', () => {
+    it('should render a delete button for each endpoint', () => {
+      render(
+        <EndpointList
+          endpoints={mockEndpoints}
+          selectedEndpoint={null}
+          onSelectEndpoint={() => {}}
+          onDeleteEndpoint={() => {}}
+        />
+      );
+
+      const deleteButtons = screen.getAllByText('Delete');
+      expect(deleteButtons).toHaveLength(mockEndpoints.length);
+    });
+
+    it('should call onDeleteEndpoint with the correct endpoint ID when delete is clicked', () => {
+      const handleDelete = vi.fn();
+      render(
+        <EndpointList
+          endpoints={mockEndpoints}
+          selectedEndpoint={null}
+          onSelectEndpoint={() => {}}
+          onDeleteEndpoint={handleDelete}
+        />
+      );
+
+      const deleteButtons = screen.getAllByText('Delete');
+      fireEvent.click(deleteButtons[0]);
+
+      expect(handleDelete).toHaveBeenCalledWith(mockEndpoints[0].id);
+    });
+
+    it('should not trigger onSelectEndpoint when delete button is clicked', () => {
+      const handleSelect = vi.fn();
+      const handleDelete = vi.fn();
+      render(
+        <EndpointList
+          endpoints={mockEndpoints}
+          selectedEndpoint={null}
+          onSelectEndpoint={handleSelect}
+          onDeleteEndpoint={handleDelete}
+        />
+      );
+
+      const deleteButtons = screen.getAllByText('Delete');
+      fireEvent.click(deleteButtons[0]);
+
+      expect(handleSelect).not.toHaveBeenCalled();
+      expect(handleDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onDeleteEndpoint with the correct ID for each endpoint', () => {
+      const handleDelete = vi.fn();
+      render(
+        <EndpointList
+          endpoints={mockEndpoints}
+          selectedEndpoint={null}
+          onSelectEndpoint={() => {}}
+          onDeleteEndpoint={handleDelete}
+        />
+      );
+
+      const deleteButtons = screen.getAllByText('Delete');
+      fireEvent.click(deleteButtons[1]);
+
+      expect(handleDelete).toHaveBeenCalledWith(mockEndpoints[1].id);
+    });
   });
 });

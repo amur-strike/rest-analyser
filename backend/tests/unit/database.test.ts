@@ -3,6 +3,7 @@ import {
   createEndpoint,
   getEndpointsBySession,
   getEndpointBySlug,
+  softDeleteEndpoint,
   createRequestLog,
   getRequestLogsByEndpoint,
   getRequestLogById,
@@ -62,6 +63,102 @@ describe('Database Operations', () => {
       expect(() => {
         createEndpoint('session-2', slug);
       }).toThrow();
+    });
+  });
+
+  describe('softDeleteEndpoint', () => {
+    it('should soft-delete an endpoint and return true', () => {
+      const sessionId = 'session-soft-delete-1';
+      const endpoint = createEndpoint(sessionId, 'soft-delete-slug-1');
+
+      const result = softDeleteEndpoint(endpoint.id, sessionId);
+
+      expect(result).toBe(true);
+    });
+
+    it('should set deleted_at on the endpoint', () => {
+      const before = Date.now();
+      const sessionId = 'session-soft-delete-2';
+      const endpoint = createEndpoint(sessionId, 'soft-delete-slug-2');
+
+      softDeleteEndpoint(endpoint.id, sessionId);
+
+      // getEndpointBySlug still finds the row (URL slug remains resolvable)
+      const found = getEndpointBySlug('soft-delete-slug-2');
+      expect(found).toBeDefined();
+      expect(found!.deleted_at).toBeGreaterThanOrEqual(before);
+    });
+
+    it('should return false for a non-existent endpoint', () => {
+      const result = softDeleteEndpoint('non-existent-id', 'any-session');
+      expect(result).toBe(false);
+    });
+
+    it('should return false when the endpoint belongs to a different session', () => {
+      const endpoint = createEndpoint('session-owner', 'owned-slug');
+
+      const result = softDeleteEndpoint(endpoint.id, 'session-attacker');
+
+      expect(result).toBe(false);
+      // Endpoint should be untouched
+      const found = getEndpointBySlug('owned-slug');
+      expect(found!.deleted_at).toBeNull();
+    });
+
+    it('should return false when the endpoint is already deleted', () => {
+      const sessionId = 'session-double-delete';
+      const endpoint = createEndpoint(sessionId, 'double-delete-slug');
+
+      softDeleteEndpoint(endpoint.id, sessionId);
+      const result = softDeleteEndpoint(endpoint.id, sessionId);
+
+      expect(result).toBe(false);
+    });
+
+    it('should exclude soft-deleted endpoints from getEndpointsBySession', () => {
+      const sessionId = 'session-filter-test';
+      const ep1 = createEndpoint(sessionId, 'filter-slug-1');
+      const ep2 = createEndpoint(sessionId, 'filter-slug-2');
+
+      softDeleteEndpoint(ep1.id, sessionId);
+
+      const endpoints = getEndpointsBySession(sessionId);
+      expect(endpoints).toHaveLength(1);
+      expect(endpoints[0].id).toBe(ep2.id);
+    });
+
+    it('should still resolve slug via getEndpointBySlug after soft-delete', () => {
+      const sessionId = 'session-slug-resolve';
+      const endpoint = createEndpoint(sessionId, 'still-resolves-slug');
+
+      softDeleteEndpoint(endpoint.id, sessionId);
+
+      const found = getEndpointBySlug('still-resolves-slug');
+      expect(found).toBeDefined();
+      expect(found!.id).toBe(endpoint.id);
+    });
+
+    it('should preserve all request logs after soft-delete', () => {
+      const sessionId = 'session-preserve-logs';
+      const endpoint = createEndpoint(sessionId, 'preserve-logs-slug');
+
+      createRequestLog({
+        endpoint_id: endpoint.id,
+        method: 'GET',
+        headers: '{}',
+        body: null,
+        query_params: null,
+        source_ip: '1.1.1.1',
+        geo_location: null,
+        user_agent: null,
+        timestamp: Date.now(),
+      });
+
+      softDeleteEndpoint(endpoint.id, sessionId);
+
+      const logs = getRequestLogsByEndpoint(endpoint.id);
+      expect(logs).toHaveLength(1);
+      expect(logs[0].method).toBe('GET');
     });
   });
 
