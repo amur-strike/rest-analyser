@@ -22,7 +22,7 @@ A web application for analyzing REST API requests. Generate unique HTTPS URLs an
 ## Tech Stack
 
 - **Frontend**: React with TypeScript
-- **Backend**: Node.js with Express and TypeScript
+- **Backend**: Node.js with Express and TypeScript (Node <= 22)
 - **Database**: SQLite
 - **Real-time**: WebSocket for live request updates
 - **Geolocation**: geoip-lite for IP-based location lookup
