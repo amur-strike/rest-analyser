@@ -18,6 +18,7 @@ A web application for analyzing REST API requests. Generate unique HTTPS URLs an
 - **Request History**: Navigate through all requests to an endpoint
 - **Sticky URLs**: Previously generated URLs persist across sessions on the same device/browser
 - **Multiple Endpoints**: Generate and switch between multiple monitoring URLs
+- **Delete Endpoints**: Soft-delete endpoints to remove them from your list while preserving all historical request logs; the URL slug remains active and continues to capture new requests
 
 ## Tech Stack
 
@@ -151,6 +152,7 @@ npm run cdk:destroy
 5. Watch requests appear in real-time in the application
 6. Click on any request to view its details
 7. Switch between different endpoints using the sidebar
+8. Click "Delete" on an endpoint to remove it from your list — all request history is preserved and the URL remains active
 
 ## Example Request
 
@@ -203,9 +205,9 @@ npm run test:coverage
 ```
 
 **Test Coverage**:
-- ✅ Backend: Database operations, API endpoints, request logging
-- ✅ Frontend: Components, hooks, services, user interactions
-- ✅ Integration: End-to-end API flows
+- ✅ Backend: Database operations, API endpoints, request logging, soft-delete
+- ✅ Frontend: Components, hooks, services, user interactions, delete flows
+- ✅ Integration: End-to-end API flows, WebSocket disconnect on delete
 
 For detailed testing documentation, see [TESTING.md](./TESTING.md)
 

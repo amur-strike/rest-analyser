@@ -86,8 +86,10 @@ rest-analyser/
 
 **routes/api.ts**
 - POST /api/generate-url - Generate new monitoring URL
-- GET /api/endpoints - Get all endpoints for session
-- GET /api/endpoints/:id/logs - Get request logs
+- GET /api/endpoints - Get all endpoints for session (excludes soft-deleted)
+- DELETE /api/endpoints/:id - Soft-delete an endpoint; notifies subscribed WebSocket clients
+- GET /api/endpoints/:id/logs - Get request logs (preserved after deletion)
+- GET /api/logs/:logId - Get specific log
 
 **routes/endpoint.ts**
 - ALL /e/:slug - Capture all HTTP methods
@@ -97,7 +99,8 @@ rest-analyser/
 **websocket.ts**
 - WebSocket server setup
 - Subscribe/unsubscribe to endpoints
-- Real-time request broadcasting
+- Real-time request broadcasting (`broadcastNewRequest`)
+- Endpoint deletion notification (`notifyEndpointDeleted`) — sends `endpoint_deleted` to all subscribed clients and clears their subscription server-side
 
 ### Frontend
 
@@ -114,6 +117,7 @@ rest-analyser/
 - Sidebar displaying all endpoints
 - Endpoint selection
 - Copy URL functionality
+- Delete endpoint button (calls `onDeleteEndpoint` prop, stops propagation to selection)
 
 **components/RequestViewer.tsx**
 - Request history list
@@ -256,8 +260,9 @@ Simpler architecture:
 
 ### Management API
 - `POST /api/generate-url` - Generate new endpoint
-- `GET /api/endpoints` - List user's endpoints
-- `GET /api/endpoints/:id/logs` - Get request logs
+- `GET /api/endpoints` - List user's endpoints (excludes soft-deleted)
+- `DELETE /api/endpoints/:id` - Soft-delete endpoint (preserves logs and URL slug)
+- `GET /api/endpoints/:id/logs` - Get request logs (accessible even after deletion)
 - `GET /api/logs/:logId` - Get specific log
 
 ### Dynamic Endpoints
@@ -297,6 +302,15 @@ Simpler architecture:
 }
 ```
 
+```json
+{
+  "type": "endpoint_deleted",
+  "endpointId": "endpoint-uuid"
+}
+```
+
+Sent to all clients currently subscribed to the deleted endpoint. The server also clears each client's subscription so no further `new_request` messages are delivered for that endpoint.
+
 ## Database Schema
 
 ### endpoints
@@ -304,6 +318,7 @@ Simpler architecture:
 - `session_id` (TEXT, indexed)
 - `url_slug` (TEXT, UNIQUE, indexed)
 - `created_at` (INTEGER)
+- `deleted_at` (INTEGER, nullable) — set on soft-delete; `NULL` means active. Rows are never removed. `getEndpointsBySession` filters `WHERE deleted_at IS NULL`; `getEndpointBySlug` does not filter, so deleted slugs continue to resolve and capture requests.
 
 ### request_logs
 - `id` (TEXT, PRIMARY KEY)

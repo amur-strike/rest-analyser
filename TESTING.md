@@ -10,6 +10,9 @@ Comprehensive test suite for the REST Endpoint Analyser application.
 - ✅ Database operations (CRUD for endpoints and request logs)
 - ✅ Data validation and constraints
 - ✅ Error handling
+- ✅ Soft-delete: sets `deleted_at`, returns correct boolean, session-scoped, double-delete guard
+- ✅ Soft-delete: deleted endpoint excluded from session list but slug still resolves
+- ✅ Soft-delete: all request logs preserved after deletion
 
 **Integration Tests** (`backend/tests/integration/`):
 - ✅ API endpoints (generate URL, fetch endpoints, fetch logs)
@@ -17,6 +20,14 @@ Comprehensive test suite for the REST Endpoint Analyser application.
 - ✅ Request logging (headers, body, query params)
 - ✅ Session management
 - ✅ Multiple concurrent requests
+- ✅ DELETE /api/endpoints/:id returns 204 on success
+- ✅ DELETE /api/endpoints/:id returns 404 for non-existent or already-deleted endpoint
+- ✅ DELETE /api/endpoints/:id returns 404 for cross-session attempt (session isolation)
+- ✅ Deleted endpoint removed from GET /api/endpoints response
+- ✅ Slug continues to accept and log requests after deletion
+- ✅ Request logs accessible via API after deletion
+- ✅ `notifyEndpointDeleted` called with correct ID on success
+- ✅ `notifyEndpointDeleted` not called when deletion fails
 
 ### Frontend Tests
 
@@ -26,15 +37,23 @@ Comprehensive test suite for the REST Endpoint Analyser application.
 - ✅ WebSocket re-subscription after reconnect
 - ✅ Incoming request prepended to list (newest first)
 - ✅ Incoming request auto-selected in detail panel (replaces previous selection)
+- ✅ `endpoint_deleted` WS message removes endpoint from sidebar list
+- ✅ `endpoint_deleted` WS message clears selection and shows "No Endpoint Selected" when the deleted endpoint was active
+- ✅ `endpoint_deleted` WS message preserves selection when a non-selected endpoint is deleted
+- ✅ Delete button calls `api.deleteEndpoint` and removes endpoint from list
+- ✅ Delete button on selected endpoint clears selection and shows "No Endpoint Selected"
+- ✅ Delete button on non-selected endpoint preserves the current selection
 
 **Component Tests** (`frontend/src/components/__tests__/`):
 - ✅ Header component
-- ✅ EndpointList component (empty state, list rendering, selection)
+- ✅ EndpointList component (empty state, list rendering, selection, copy URL)
+- ✅ EndpointList delete button: rendered per endpoint, calls `onDeleteEndpoint` with correct ID, does not trigger `onSelectEndpoint`
 - ✅ RequestViewer component (request list, details display)
 
 **Service Tests** (`frontend/src/services/__tests__/`):
 - ✅ API client functionality
 - ✅ HTTP request handling
+- ✅ `deleteEndpoint` sends DELETE to correct URL and resolves without a value
 
 **Hook Tests** (`frontend/src/hooks/__tests__/`):
 - ✅ WebSocket connection
@@ -234,6 +253,11 @@ jobs:
    - ✅ Fetch endpoints by session
    - ✅ Endpoint isolation between sessions
    - ✅ Non-existent endpoint handling
+   - ✅ Soft-delete endpoint (204, removed from list)
+   - ✅ Delete returns 404 for non-existent, already-deleted, or cross-session endpoint
+   - ✅ URL slug continues accepting requests after deletion
+   - ✅ Request logs preserved and accessible after deletion
+   - ✅ `notifyEndpointDeleted` called only on successful delete
 
 3. **Request Logging**
    - ✅ All HTTP methods (GET, POST, PUT, DELETE)
@@ -249,6 +273,9 @@ jobs:
    - ✅ Data integrity
    - ✅ Null value handling
    - ✅ Foreign key constraints
+   - ✅ Soft-delete: `deleted_at` set, session-scoped, double-delete guard
+   - ✅ Soft-delete: slug still resolves via `getEndpointBySlug`
+   - ✅ Soft-delete: logs preserved via `getRequestLogsByEndpoint`
 
 ### Frontend
 
@@ -261,6 +288,8 @@ jobs:
    - ✅ Button clicks
    - ✅ Item selection
    - ✅ Copy to clipboard
+   - ✅ Delete endpoint (button click, API call, state update)
+   - ✅ Delete does not trigger endpoint selection
 
 3. **State Management**
    - ✅ Selected endpoint highlighting
@@ -285,6 +314,14 @@ jobs:
    - ✅ New requests prepended to list (newest first)
    - ✅ New request auto-selected in detail panel, replacing any previous selection
    - ✅ No duplicate requests from StrictMode double-mount — intentional close does not reconnect even when `onclose` fires asynchronously after remount
+
+6. **Endpoint Deletion**
+   - ✅ `endpoint_deleted` WS message removes the endpoint from sidebar
+   - ✅ `endpoint_deleted` WS message clears selection and shows "No Endpoint Selected" for the active endpoint
+   - ✅ `endpoint_deleted` WS message leaves the current selection unchanged when a different endpoint is deleted
+   - ✅ Delete button triggers API call and removes endpoint from list
+   - ✅ Delete button on the selected endpoint clears the detail panel
+   - ✅ Delete button on a non-selected endpoint preserves the current selection and viewer
 
 ## Debugging Tests
 
