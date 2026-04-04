@@ -151,7 +151,7 @@ describe('API Integration Tests', () => {
       await agent.delete(`/api/endpoints/${endpointId}`).expect(404);
     });
 
-    it('should still capture new requests to the slug after deletion', async () => {
+    it('should return 404 for requests to a deleted endpoint slug', async () => {
       const agent = request.agent(app);
 
       const urlResponse = await agent.post('/api/generate-url');
@@ -159,9 +159,7 @@ describe('API Integration Tests', () => {
 
       await agent.delete(`/api/endpoints/${endpointId}`);
 
-      // The URL slug should still accept incoming requests
-      const response = await agent.get(`/e/${slug}`).expect(200);
-      expect(response.body.success).toBe(true);
+      await agent.get(`/e/${slug}`).expect(404);
     });
 
     it('should preserve existing request logs after deletion', async () => {

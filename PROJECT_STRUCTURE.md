@@ -87,7 +87,7 @@ rest-analyser/
 **routes/api.ts**
 - POST /api/generate-url - Generate new monitoring URL
 - GET /api/endpoints - Get all endpoints for session (excludes soft-deleted)
-- DELETE /api/endpoints/:id - Soft-delete an endpoint; notifies subscribed WebSocket clients
+- DELETE /api/endpoints/:id - Soft-delete an endpoint; slug returns 404 for new requests; notifies subscribed WebSocket clients
 - GET /api/endpoints/:id/logs - Get request logs (preserved after deletion)
 - GET /api/logs/:logId - Get specific log
 
@@ -261,7 +261,7 @@ Simpler architecture:
 ### Management API
 - `POST /api/generate-url` - Generate new endpoint
 - `GET /api/endpoints` - List user's endpoints (excludes soft-deleted)
-- `DELETE /api/endpoints/:id` - Soft-delete endpoint (preserves logs and URL slug)
+- `DELETE /api/endpoints/:id` - Soft-delete endpoint (preserves logs; slug returns 404 for new requests)
 - `GET /api/endpoints/:id/logs` - Get request logs (accessible even after deletion)
 - `GET /api/logs/:logId` - Get specific log
 
@@ -318,7 +318,7 @@ Sent to all clients currently subscribed to the deleted endpoint. The server als
 - `session_id` (TEXT, indexed)
 - `url_slug` (TEXT, UNIQUE, indexed)
 - `created_at` (INTEGER)
-- `deleted_at` (INTEGER, nullable) — set on soft-delete; `NULL` means active. Rows are never removed. `getEndpointsBySession` filters `WHERE deleted_at IS NULL`; `getEndpointBySlug` does not filter, so deleted slugs continue to resolve and capture requests.
+- `deleted_at` (INTEGER, nullable) — set on soft-delete; `NULL` means active. Rows are never removed. `getEndpointsBySession` filters `WHERE deleted_at IS NULL`. `getEndpointBySlug` returns the row regardless, but the endpoint handler checks `deleted_at` and returns 404 for deleted slugs, so no new requests are logged.
 
 ### request_logs
 - `id` (TEXT, PRIMARY KEY)

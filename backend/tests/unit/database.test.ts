@@ -127,7 +127,8 @@ describe('Database Operations', () => {
       expect(endpoints[0].id).toBe(ep2.id);
     });
 
-    it('should still resolve slug via getEndpointBySlug after soft-delete', () => {
+    it('should keep the row in the database (getEndpointBySlug still returns it)', () => {
+      // The endpoint handler checks deleted_at and returns 404; the DB row is never removed.
       const sessionId = 'session-slug-resolve';
       const endpoint = createEndpoint(sessionId, 'still-resolves-slug');
 
@@ -136,6 +137,7 @@ describe('Database Operations', () => {
       const found = getEndpointBySlug('still-resolves-slug');
       expect(found).toBeDefined();
       expect(found!.id).toBe(endpoint.id);
+      expect(found!.deleted_at).not.toBeNull();
     });
 
     it('should preserve all request logs after soft-delete', () => {

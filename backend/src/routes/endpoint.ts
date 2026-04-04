@@ -14,7 +14,7 @@ router.all('/:slug', async (req: Request, res: Response) => {
     // Find the endpoint
     const endpoint = getEndpointBySlug(slug);
 
-    if (!endpoint) {
+    if (!endpoint || endpoint.deleted_at !== null) {
       return res.status(404).json({ error: 'Endpoint not found' });
     }
 

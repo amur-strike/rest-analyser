@@ -24,7 +24,7 @@ Comprehensive test suite for the REST Endpoint Analyser application.
 - ✅ DELETE /api/endpoints/:id returns 404 for non-existent or already-deleted endpoint
 - ✅ DELETE /api/endpoints/:id returns 404 for cross-session attempt (session isolation)
 - ✅ Deleted endpoint removed from GET /api/endpoints response
-- ✅ Slug continues to accept and log requests after deletion
+- ✅ Slug returns 404 for new requests after deletion (no further logging)
 - ✅ Request logs accessible via API after deletion
 - ✅ `notifyEndpointDeleted` called with correct ID on success
 - ✅ `notifyEndpointDeleted` not called when deletion fails
